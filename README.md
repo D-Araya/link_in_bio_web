@@ -1,179 +1,229 @@
-# Link in Bio Website 🔗
+# Link in Bio Website - Rastro Sureño 🔗
 
-Una aplicación web moderna de "link in bio" construida con React, TypeScript, Vite y completamente dockerizada para desarrollo, testing y producción.
+Una aplicación web moderna de "link in bio" construida con React, TypeScript y Vite. Diseñada específicamente para **Rastro Sureño** - empresa patagónica especializada en quesos artesanales, mistelas y mermeladas.
+
+> *"Prueba el Sur, la Patagonia te Invita a Descubrir"*
+
+🌐 **Demo en vivo**: [https://d-araya.github.io/link_in_bio_web/](https://d-araya.github.io/link_in_bio_web/)
 
 ## 📋 Tabla de Contenidos
 
-- [Características](#-características)
-- [Tecnologías](#-tecnologías)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Instalación y Configuración](#-instalación-y-configuración)
-- [Desarrollo](#-desarrollo)
-- [Testing](#-testing)
-- [Docker](#-docker)
-- [Producción](#-producción)
-- [Despliegue](#-despliegue)
-- [Componentes](#-componentes)
-- [Scripts Disponibles](#-scripts-disponibles)
-- [Contribución](#-contribución)
+- [✨ Características](#-características)
+- [🛠️ Tecnologías](#️-tecnologías)
+- [📁 Estructura del Proyecto](#-estructura-del-proyecto)
+- [🚀 Inicio Rápido](#-inicio-rápido)
+- [💻 Desarrollo](#-desarrollo)
+- [🧪 Testing](#-testing)
+- [🐳 Docker](#-docker)
+- [🚀 Deployment](#-deployment)
+- [🧩 Componentes](#-componentes)
+- [📋 Scripts Disponibles](#-scripts-disponibles)
+- [🤝 Contribución](#-contribución)
+- [🏢 Sobre Rastro Sureño](#-sobre-rastro-sureño)
+- [📄 Licencia](#-licencia)
+- [🆘 Soporte](#-soporte)
 
 ## ✨ Características
 
-- 🎨 **Interfaz moderna y responsive** con diseño minimalista
-- 👤 **Avatar personalizable** con efectos hover
-- 🔗 **Botones de enlaces** con iconos y animaciones
-- 🐳 **Completamente dockerizado** con configuración multi-stage
-- 🧪 **Testing completo** con Vitest y React Testing Library
-- ⚡ **Desarrollo rápido** con Vite y Hot Module Replacement
-- 📱 **Responsive design** optimizado para móviles y desktop
-- 🔧 **TypeScript** para mayor seguridad de tipos
-- 🎯 **ESLint** configurado para mejores prácticas
+- 🚀 **React 19.1.1** con TypeScript para desarrollo type-safe
+- ⚡ **Vite 7.1.2** para desarrollo rápido y builds optimizados
+- 🎨 **Diseño responsive** que se adapta a todos los dispositivos
+- 🧪 **Testing completo** con Vitest 3.2.4 y Testing Library
+- 🐳 **Docker** con arquitectura multi-stage para desarrollo y producción
+- 🔧 **ESLint 9.33.0** para mantener código limpio y consistente
+- 📦 **GitHub Actions** para CI/CD automatizado
+- 🌐 **Deploy automático** a GitHub Pages
+- 🎯 **Componentes reutilizables** (Avatar, LinkButton)
+- 📱 **Interfaz optimizada** para redes sociales y e-commerce
+- ✨ **Efectos hover** y animaciones suaves
+- 🔒 **Configuración de seguridad** con usuario no-root en Docker
 
 ## 🛠 Tecnologías
 
 ### Frontend
-- **React 18** - Biblioteca de interfaz de usuario
-- **TypeScript** - Superset tipado de JavaScript
-- **Vite** - Build tool y dev server ultrarrápido
+- **React 19.1.1** - Biblioteca de interfaz de usuario
+- **TypeScript 5.8.3** - Superset tipado de JavaScript
+- **Vite 7.1.2** - Build tool y dev server ultrarrápido
 - **CSS3** - Estilos modernos con flexbox y animaciones
+- **Font Awesome** - Iconos para redes sociales y enlaces
 
 ### Testing
-- **Vitest** - Framework de testing rápido y moderno
-- **React Testing Library** - Utilidades para testing de componentes React
-- **@testing-library/jest-dom** - Matchers adicionales para DOM
-- **jsdom** - Implementación de DOM para Node.js
+- **Vitest 3.2.4** - Framework de testing rápido y moderno
+- **React Testing Library 16.1.0** - Utilidades para testing de componentes React
+- **@testing-library/jest-dom 6.6.3** - Matchers adicionales para DOM
+- **@testing-library/user-event 14.5.2** - Simulación de eventos de usuario
+- **jsdom 25.0.1** - Implementación de DOM para Node.js
+- **@vitest/coverage-v8 3.2.4** - Cobertura de código
+- **@vitest/ui 3.2.4** - Interfaz web para testing
 
 ### DevOps
 - **Docker** - Containerización con multi-stage builds
 - **Docker Compose** - Orquestación de servicios
-- **Nginx** - Servidor web para producción
-- **GitHub Actions** - CI/CD automatizado
+- **Nginx Alpine** - Servidor web optimizado para producción
+- **GitHub Actions** - CI/CD automatizado con deploy a GitHub Pages
 - **GitHub Pages** - Hosting gratuito
 - **GitHub Container Registry** - Registro de imágenes Docker
-- **ESLint** - Linting y análisis estático de código
+- **ESLint 9.33.0** - Linting y análisis estático de código
+- **Node.js 20 Alpine** - Runtime para desarrollo
 
 ## 📁 Estructura del Proyecto
 
 ```
-link-in-bio-website/
-├── 📁 public/
-│   └── logo_rastro_sureno.jpg     # Logo/avatar de la aplicación
-├── 📁 src/
-│   ├── 📁 components/
-│   │   ├── Avatar.tsx              # Componente de avatar
-│   │   ├── LinkButton.tsx          # Componente de botón de enlace
-│   │   └── 📁 __tests__/
-│   │       ├── Avatar.test.tsx     # Tests del componente Avatar
-│   │       └── LinkButton.test.tsx # Tests del componente LinkButton
-│   ├── 📁 test/
-│   │   └── setup.ts                # Configuración global de tests
-│   ├── 📁 __tests__/
-│   │   └── App.test.tsx            # Tests de integración de App
-│   ├── App.tsx                     # Componente principal
-│   ├── main.tsx                    # Punto de entrada
-│   ├── index.css                   # Estilos globales
-│   └── vite-env.d.ts              # Tipos de Vite
-├── 📄 Dockerfile                   # Configuración Docker multi-stage
-├── 📄 docker-compose.yml          # Orquestación de servicios
-├── 📄 DOCKER.md                    # Guía completa de Docker
-├── 📄 package.json                # Dependencias y scripts
-├── 📄 vite.config.ts              # Configuración de Vite
-├── 📄 vitest.config.ts            # Configuración de Vitest
-├── 📄 tsconfig.json               # Configuración de TypeScript
-└── 📄 eslint.config.js            # Configuración de ESLint
+link_in_bio_web/
+├── 📁 .github/                 # GitHub Actions workflows
+│   └── workflows/
+│       └── deploy.yml         # Pipeline CI/CD con testing y deploy
+├── 📁 public/                 # Archivos estáticos
+│   ├── logo_rastro_sureno.jpg # Logo de Rastro Sureño
+│   └── vite.svg              # Favicon
+├── 📁 src/                    # Código fuente
+│   ├── 📁 components/         # Componentes React reutilizables
+│   │   ├── Avatar.tsx        # Componente de avatar con efectos hover
+│   │   ├── LinkButton.tsx    # Botón de enlace con iconos y animaciones
+│   │   └── __tests__/        # Tests de componentes
+│   ├── 📁 test/              # Configuración de testing
+│   │   └── setup.ts         # Setup de Vitest con mocks
+│   ├── 📁 __tests__/         # Tests de la aplicación
+│   │   └── App.test.tsx     # Tests del componente principal
+│   ├── App.tsx              # Componente principal con datos de Rastro Sureño
+│   ├── main.tsx             # Punto de entrada
+│   ├── index.css            # Estilos globales
+│   └── vite-env.d.ts        # Tipos de Vite
+├── 📄 Dockerfile             # Multi-stage build (dev, test, prod)
+├── 📄 docker-compose.yml     # Orquestación de servicios
+├── 📄 package.json           # Dependencias y scripts npm
+├── 📄 tsconfig.json          # Configuración base de TypeScript
+├── 📄 tsconfig.app.json      # Configuración específica de la app
+├── 📄 tsconfig.node.json     # Configuración para Node.js
+├── 📄 vite.config.ts         # Configuración de Vite con optimizaciones
+├── 📄 vitest.config.ts       # Configuración de Vitest con coverage
+├── 📄 eslint.config.js       # Configuración de ESLint
+└── 📄 README.md             # Este archivo
 ```
 
-## 🚀 Instalación y Configuración
+## 🚀 Inicio Rápido
 
 ### Prerrequisitos
-- Node.js 20+ (si ejecutas localmente)
-- Docker y Docker Compose (recomendado)
-- Git
 
-### Clonar el Repositorio
+- **Node.js** 18+ (recomendado 20)
+- **npm** o **yarn**
+- **Docker** (opcional, para desarrollo con contenedores)
+- **Git**
+
+### Instalación
+
 ```bash
-git clone <repository-url>
-cd link-in-bio-website
-```
+# 1. Clonar el repositorio
+git clone https://github.com/D-Araya/link_in_bio_web.git
+cd link_in_bio_web
 
-### Opción 1: Desarrollo con Docker (Recomendado)
-```bash
-# Construir y ejecutar en modo desarrollo
-docker-compose up --build app
-
-# La aplicación estará disponible en http://localhost:5173
-```
-
-### Opción 2: Desarrollo Local
-```bash
-# Instalar dependencias
+# 2. Instalar dependencias
 npm install
 
-# Ejecutar en modo desarrollo
+# 3. Iniciar servidor de desarrollo
 npm run dev
 ```
+
+🌐 **Aplicación disponible en**: http://localhost:5173
+
+### Personalización
+
+1. **Información de la empresa** → Edita `src/App.tsx`
+2. **Logo/Avatar** → Reemplaza `public/logo_rastro_sureno.jpg`
+3. **Enlaces sociales** → Modifica los componentes `LinkButton` en `App.tsx`
+4. **Estilos y colores** → Actualiza los estilos inline según tu marca
+5. **Configuración** → Opcional: crea `.env.local` para variables específicas
 
 ## 💻 Desarrollo
 
 ### Comandos de Desarrollo
 
 ```bash
+# Desarrollo local (recomendado)
+npm run dev
+
 # Desarrollo con Docker
 docker-compose up app
 
-# Desarrollo local
-npm run dev
-
-# Linting
+# Linting y verificación de código
 npm run lint
 
-# Preview de build
+# Preview del build de producción
 npm run preview
 ```
 
-### Hot Module Replacement
-Vite proporciona HMR automático. Los cambios en el código se reflejan instantáneamente en el navegador sin perder el estado de la aplicación.
+🌐 **Servidor disponible en**: http://localhost:5173
 
-### Estructura de Componentes
+### Características del Entorno
 
-La aplicación sigue una arquitectura de componentes modular:
+- ⚡ **Hot Module Replacement (HMR)** - Cambios instantáneos sin perder estado
+- 🔄 **Auto-reload** - Recarga automática en cambios de archivos
+- 🐛 **Source maps** - Debugging fácil con mapeo de código original
+- 📱 **Responsive testing** - Vista optimizada para diferentes dispositivos
+- 🔧 **TypeScript** - Verificación de tipos en tiempo real
+- 🎨 **CSS-in-JS** - Estilos inline con IntelliSense
+- 🔍 **ESLint** - Análisis de código en tiempo real
 
-- **App.tsx**: Componente principal que orquesta la aplicación
-- **Avatar.tsx**: Componente reutilizable para mostrar avatar con efectos
-- **LinkButton.tsx**: Componente para botones de enlaces con iconos
+### Arquitectura de Componentes
+
+```
+src/
+├── App.tsx              # 🏠 Componente principal
+├── components/
+│   ├── Avatar.tsx       # 👤 Imagen de perfil con efectos
+│   └── LinkButton.tsx   # 🔗 Botones de enlaces con iconos
+└── test/
+    └── setup.ts         # ⚙️ Configuración de testing
+```
 
 ## 🧪 Testing
 
-### Framework de Testing
-Utilizamos **Vitest** con **React Testing Library** para un testing moderno y eficiente.
-
-### Ejecutar Tests
+### Comandos de Testing
 
 ```bash
+# Desarrollo con tests en watch mode
+npm run test
+
+# Ejecutar todos los tests una vez
+npm run test:run
+
+# Interfaz web interactiva para tests
+npm run test:ui
+
+# Generar reporte completo de cobertura
+npm run test:coverage
+
 # Tests con Docker
 docker-compose --profile testing run --rm test
-
-# Tests con coverage
-docker-compose --profile testing run --rm test-coverage
-
-# Tests en modo watch
-docker-compose --profile testing run --rm test-watch
-
-# Tests locales
-npm test
-npm run test:coverage
-npm run test:ui
 ```
 
-### Cobertura de Tests
-- ✅ **Avatar.tsx**: Tests de renderizado, props y interacciones
-- ✅ **LinkButton.tsx**: Tests de renderizado, enlaces y accesibilidad
-- ✅ **App.tsx**: Tests de integración y renderizado completo
+### Stack de Testing
 
-### Configuración de Tests
-- **vitest.config.ts**: Configuración principal de Vitest
-- **src/test/setup.ts**: Setup global con mocks y configuraciones
-- **@testing-library/jest-dom**: Matchers adicionales para DOM
+| Herramienta | Versión | Propósito |
+|-------------|---------|----------|
+| **Vitest** | 3.2.4 | Framework de testing rápido |
+| **Testing Library** | 16.1.0 | Testing de componentes React |
+| **Jest DOM** | 6.6.3 | Matchers adicionales para DOM |
+| **User Event** | 14.5.2 | Simulación de interacciones |
+| **jsdom** | 25.0.1 | Entorno DOM para Node.js |
+| **Coverage v8** | 3.2.4 | Reportes de cobertura |
+
+### Configuración Avanzada
+
+- ✅ **Mocks automáticos**: `matchMedia`, `window.open`, `ResizeObserver`
+- ✅ **Setup global**: Configuración en `src/test/setup.ts`
+- ✅ **Umbrales de calidad**: 80% en todas las métricas
+- ✅ **Interfaz web**: Dashboard interactivo para análisis
+- ✅ **CI/CD integrado**: Tests automáticos en cada push
+
+### Cobertura de Tests
+
+```
+- 🎯 **Branches**: 80%
+- 🎯 **Functions**: 80%
+- 🎯 **Lines**: 80%
+- 🎯 **Statements**: 80%
+```
 
 ## 🐳 Docker
 
@@ -209,201 +259,270 @@ docker-compose --profile production up production
 - **Código fuente**: Montado como volumen para desarrollo
 - **node_modules**: Volumen persistente para mejor rendimiento
 - **Builds**: Volúmenes para artefactos de construcción
+```
 
 Para más detalles, consulta [DOCKER.md](./DOCKER.md).
 
-## 🌐 Producción
+## 🚀 Deployment
 
-### Build de Producción
-```bash
-# Con Docker
-docker-compose --profile build run build
+### 🌐 GitHub Pages (Producción)
 
-# Local
-npm run build
+**URL en vivo**: [https://d-araya.github.io/link_in_bio_web/](https://d-araya.github.io/link_in_bio_web/)
+
+#### Pipeline Automático CI/CD
+
+Cada push a `main` ejecuta automáticamente:
+
+```mermaid
+graph LR
+    A[Push to main] --> B[Checkout Code]
+    B --> C[Setup Node.js 18]
+    C --> D[Install Dependencies]
+    D --> E[Run Linting]
+    E --> F[Run Tests + Coverage]
+    F --> G[Build Production]
+    G --> H[Deploy to GitHub Pages]
+    F --> I[Upload to Codecov]
 ```
 
-### Despliegue
-```bash
-# Servidor de producción con Nginx
-docker-compose --profile production up -d production
+#### Características del Deployment
 
-# Preview local del build
+- ✅ **CI/CD Automático** con GitHub Actions
+- ✅ **Hosting Gratuito** en GitHub Pages
+- ✅ **HTTPS** por defecto con dominio personalizado
+- ✅ **Docker Registry** en GitHub Container Registry
+- ✅ **Reportes de cobertura** con Codecov
+- ✅ **Optimizaciones automáticas** (tree shaking, minificación)
+
+#### URLs de Deployment
+
+- 🌐 **Aplicación**: [https://d-araya.github.io/link_in_bio_web/](https://d-araya.github.io/link_in_bio_web/)
+- 🔧 **Actions**: [GitHub Actions](https://github.com/D-Araya/link_in_bio_web/actions)
+- 🐳 **Docker**: `ghcr.io/d-araya/link_in_bio_web:latest`
+- 📊 **Repositorio**: [GitHub Repo](https://github.com/D-Araya/link_in_bio_web)
+```
+
+### 🚀 Otras Plataformas
+
+#### Build de Producción
+
+```bash
+# Build local
+npm run build
+
+# Build con Docker
+docker-compose --profile build run build
+
+# Preview del build
 npm run preview
 ```
 
-### Optimizaciones
-- **Tree shaking** automático con Vite
-- **Minificación** de CSS y JavaScript
-- **Compresión gzip** en Nginx
-- **Caché de assets** optimizado
-- **Lazy loading** de componentes
-
-## 🚀 Despliegue
-
-### GitHub Pages + GitHub Actions (Recomendado)
-
-Esta aplicación está configurada para desplegarse automáticamente usando herramientas gratuitas de GitHub:
-
-#### Características del Despliegue
-- ✅ **CI/CD Automático** con GitHub Actions
-- ✅ **Hosting Gratuito** en GitHub Pages
-- ✅ **Docker Registry** en GitHub Container Registry
-- ✅ **HTTPS** por defecto
-- ✅ **Deploy automático** en cada push a main
-
-#### Configuración Rápida
-
-1. **Subir código a GitHub:**
-   ```bash
-   git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-   git push -u origin main
-   ```
-
-2. **Configurar GitHub Pages:**
-   - Ir a Settings → Pages
-   - Source: "GitHub Actions"
-
-3. **Configurar permisos:**
-   - Settings → Actions → General
-   - Workflow permissions: "Read and write permissions"
-
-4. **Actualizar configuración:**
-   ```javascript
-   // En vite.config.js, línea 28:
-   config.base = '/TU_REPOSITORIO/'
-   ```
-
-#### URLs de Despliegue
-- **Aplicación:** `https://TU_USUARIO.github.io/TU_REPOSITORIO/`
-- **Actions:** `https://github.com/TU_USUARIO/TU_REPOSITORIO/actions`
-- **Docker:** `ghcr.io/TU_USUARIO/TU_REPOSITORIO:latest`
-
-#### Workflow Automático
-Cada push a `main` ejecuta:
-1. 🧪 **Tests** y linting
-2. 🏗️ **Build** de la aplicación
-3. 🚀 **Deploy** a GitHub Pages
-4. 🐳 **Build** y push de imagen Docker
-
-### Otras Opciones de Despliegue
-
 #### Netlify
 ```bash
-# Build command
-npm run build
-
-# Publish directory
-dist
+# Configuración
+Build command: npm run build
+Publish directory: dist
+Node version: 18
 ```
 
 #### Vercel
 ```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
+# Configuración automática
+Framework: Vite
+Build command: npm run build
+Output directory: dist
 ```
 
-#### Docker en cualquier servidor
+#### Docker Producción
 ```bash
-# Usar imagen de GitHub Container Registry
-docker run -p 80:80 ghcr.io/TU_USUARIO/TU_REPOSITORIO:latest
+# Build optimizado con Nginx
+docker build --target production -t rastro-sureno .
+docker run -p 80:80 rastro-sureno
 
-# O build local
-docker-compose --profile production up -d production
+# Con Docker Compose
+docker-compose --profile production up -d
 ```
-
-📖 **Para guía detallada:** Ver [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## 🧩 Componentes
 
-### Avatar
+### 👤 Avatar
+
+Componente de imagen de perfil con efectos visuales avanzados.
+
 ```typescript
 interface AvatarProps {
-  src: string;      // URL de la imagen
-  alt: string;      // Texto alternativo
-  name: string;     // Nombre a mostrar
+  src: string;    // URL de la imagen
+  alt: string;    // Texto alternativo para accesibilidad
+  name: string;   // Nombre a mostrar debajo de la imagen
 }
 ```
 
 **Características:**
-- Imagen circular con efectos hover
-- Animaciones suaves de escala
-- Texto de nombre estilizado
-- Responsive design
+- ✨ **Efectos hover** con transformación scale
+- 📱 **Responsive** - Se adapta a diferentes tamaños
+- 🚀 **Lazy loading** - Carga optimizada de imágenes
+- 🎨 **Bordes redondeados** con sombras elegantes
+- ♿ **Accesibilidad** - Soporte completo para lectores de pantalla
 
-### LinkButton
+### 🔗 LinkButton
+
+Botón de enlace personalizable con iconos y animaciones.
+
 ```typescript
 interface LinkButtonProps {
-  href: string;     // URL de destino
-  icon: string;     // Emoji o icono
-  text: string;     // Texto del botón
+  href: string;           // URL del enlace
+  icon: string;           // Clase del icono (Font Awesome)
+  children: ReactNode;    // Texto del botón
+  color?: string;         // Color del icono (opcional)
 }
 ```
 
 **Características:**
-- Botones con iconos y texto
-- Efectos hover y animaciones
-- Enlaces externos seguros (target="_blank")
-- Diseño responsive
+- 🎯 **Smart targeting** - Enlaces externos abren en nueva pestaña
+- ✨ **Animaciones suaves** - Efectos hover con transformaciones
+- 🎨 **Iconos Font Awesome** - Amplia biblioteca de iconos
+- ♿ **Accesibilidad** - Labels ARIA y navegación por teclado
+- 🎪 **Estilos consistentes** - Diseño uniforme en toda la aplicación
 
-## 📜 Scripts Disponibles
+### 🎨 Personalización
 
-```json
-{
-  "dev": "vite --host 0.0.0.0",
-  "build": "tsc -b && vite build",
-  "lint": "eslint .",
-  "preview": "vite preview --host 0.0.0.0",
-  "test": "vitest",
-  "test:coverage": "vitest --coverage",
-  "test:ui": "vitest --ui",
-  "test:run": "vitest run"
-}
+```typescript
+// Ejemplo de uso en App.tsx
+<LinkButton 
+  href="https://instagram.com/rastrosureno" 
+  icon="fab fa-instagram" 
+  color="#E4405F"
+>
+  Instagram
+</LinkButton>
 ```
 
-## 🤝 Contribución
+## 📋 Scripts Disponibles
 
-### Flujo de Desarrollo
-1. Fork del repositorio
-2. Crear rama feature: `git checkout -b feature/nueva-funcionalidad`
-3. Desarrollar con tests: `npm test`
-4. Commit con mensajes descriptivos
-5. Push y crear Pull Request
+| Script | Descripción | Uso |
+|--------|-------------|-----|
+| `npm run dev` | Inicia servidor de desarrollo en puerto 5173 | Desarrollo local |
+| `npm run build` | Construye la aplicación para producción | Build optimizado |
+| `npm run preview` | Previsualiza el build de producción | Testing de build |
+| `npm run lint` | Ejecuta ESLint para verificar el código | Code quality |
+| `npm run test` | Ejecuta los tests en modo watch | Desarrollo TDD |
+| `npm run test:ui` | Abre la interfaz web de testing | Testing visual |
+| `npm run test:run` | Ejecuta los tests una sola vez | CI/CD |
+| `npm run test:coverage` | Genera reporte de cobertura | Quality assurance |
+| `npm run test:watch` | Ejecuta tests en modo watch específico | Desarrollo |
 
-### Estándares de Código
-- **ESLint**: Configurado para React y TypeScript
-- **Prettier**: Formateo automático de código
-- **TypeScript**: Tipado estricto obligatorio
-- **Tests**: Cobertura mínima del 80%
+### Configuraciones Especiales
+- **Dev Server**: Host 0.0.0.0 para Docker
+- **Build**: Chunks manuales para vendor (React, React-DOM)
+- **TypeScript**: Configuración estricta con ES2022
+- **ESLint**: Configuración moderna con React hooks
 
-### Testing en CI/CD
-```bash
-# Verificar que todos los tests pasen
-docker-compose --profile testing run --rm test
+## 🤝 Contribuir
 
-# Verificar cobertura
-docker-compose --profile testing run --rm test-coverage
+### 🚀 Flujo de Desarrollo
 
-# Build de producción
-docker-compose --profile build run --rm build
-```
+1. **🍴 Fork** del repositorio desde [D-Araya/link_in_bio_web](https://github.com/D-Araya/link_in_bio_web)
+2. **📥 Clonar** tu fork localmente
+   ```bash
+   git clone https://github.com/TU_USUARIO/link_in_bio_web.git
+   cd link_in_bio_web
+   ```
+3. **🌿 Crear** una rama para tu feature
+   ```bash
+   git checkout -b feature/nueva-funcionalidad
+   ```
+4. **💻 Desarrollar** siguiendo las convenciones del proyecto
+5. **🧪 Verificar** calidad del código
+   ```bash
+   npm run lint
+   npm run test
+   npm run build
+   ```
+6. **📝 Commit** con mensajes semánticos
+   ```bash
+   git commit -m "feat: agregar nueva funcionalidad"
+   ```
+7. **🚀 Push** a tu fork
+   ```bash
+   git push origin feature/nueva-funcionalidad
+   ```
+8. **🔄 Crear** Pull Request al repositorio original
 
-## 📝 Licencia
+### 📋 Estándares de Código
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+- ✅ **TypeScript estricto** - Tipado completo y sin `any`
+- ✅ **ESLint sin errores** - Código limpio y consistente
+- ✅ **Tests obligatorios** - Cobertura mínima del 80%
+- ✅ **Commits semánticos** - `feat:`, `fix:`, `docs:`, `test:`, etc.
+- ✅ **Responsive design** - Compatibilidad móvil y desktop
+- ✅ **Accesibilidad** - ARIA labels y navegación por teclado
 
-## 🆘 Soporte
+### 🔄 CI/CD Automático
 
-Si encuentras algún problema o tienes preguntas:
+Todos los Pull Requests ejecutan:
 
-1. Revisa la [documentación de Docker](./DOCKER.md)
-2. Verifica que Docker esté ejecutándose
-3. Asegúrate de tener las versiones correctas de Node.js
-4. Ejecuta `docker-compose down && docker-compose up --build app` para reiniciar
+| Check | Herramienta | Criterio |
+|-------|-------------|----------|
+| 🧪 Tests | Vitest | 100% passing |
+| 🔍 Linting | ESLint | 0 errores |
+| 📊 Cobertura | Coverage v8 | ≥ 80% |
+| 🏗️ Build | Vite | Exitoso |
+| 🐳 Docker | Multi-stage | Exitoso |
+
+## 📄 Licencia
+
+Este proyecto está bajo la **Licencia MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+## 🆘 Soporte y Comunidad
+
+### 💬 Canales de Soporte
+
+- 🐛 **Issues**: [GitHub Issues](https://github.com/D-Araya/link_in_bio_web/issues) - Reportar bugs
+- 💡 **Discusiones**: [GitHub Discussions](https://github.com/D-Araya/link_in_bio_web/discussions) - Ideas y preguntas
+- 📧 **Email**: [contacto@rastrosureno.com](mailto:contacto@rastrosureno.com) - Soporte directo
+
+### 🏷️ Plantillas de Issues
+
+- 🐛 **Bug Report** - Para reportar errores
+- ✨ **Feature Request** - Para solicitar nuevas funcionalidades
+- 📚 **Documentation** - Para mejoras en documentación
+- ❓ **Question** - Para preguntas generales
 
 ---
 
-**Desarrollado con ❤️ usando React, TypeScript, Vite y Docker**
+## 🏢 Sobre Rastro Sureño
+
+**Rastro Sureño** es una empresa patagónica especializada en:
+- 🧀 **Quesos Artesanales** de alta calidad
+- 🍷 **Mistelas** tradicionales
+- 🍯 **Mermeladas** caseras
+
+*"Prueba el Sur, la Patagonia te Invita a Descubrir"*
+
+### 🌐 Enlaces Oficiales
+
+| Plataforma | Enlace | Descripción |
+|------------|--------|-------------|
+| 🌐 **Sitio Web** | [rastrosureno.com](https://rastrosureno.com) | Tienda online oficial |
+| 📱 **Instagram** | [@rastrosureno](https://instagram.com/rastrosureno) | Contenido visual y novedades |
+| 📘 **Facebook** | [Rastro Sureño](https://facebook.com/rastrosureno) | Comunidad y eventos |
+| 🎵 **TikTok** | [@rastrosureno](https://tiktok.com/@rastrosureno) | Videos y tendencias |
+| 💬 **WhatsApp** | [Contacto directo](https://wa.me/1234567890) | Atención personalizada |
+| 📧 **Email** | [contacto@rastrosureno.com](mailto:contacto@rastrosureno.com) | Contacto directo |
+
+---
+
+
+
+### 🚀 **Deploy en Vivo**
+[**Ver Aplicación →**](https://d-araya.github.io/link_in_bio_web/)
+
+### ⭐ **¡Dale una estrella si te fue útil!**
+
+### 🛠️ **Stack Tecnológico**
+**React 19.1.1** • **TypeScript 5.8.3** • **Vite 7.1.2** • **Vitest 3.2.4** • **Docker** • **GitHub Actions**
+
+---
+
+*Desarrollado con ❤️ por [D-Araya](https://github.com/D-Araya) para Rastro Sureño*
+
