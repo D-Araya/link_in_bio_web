@@ -1,36 +1,33 @@
-name: Build and Deploy to GitHub Pages
+name: Build and Deploy Rastro Sureño Link in Bio
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]  # Solo main branch
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
+  workflow_dispatch:    # Manual trigger para testing
 
-# Permite ejecutar este workflow manualmente desde la pestaña Actions
-  workflow_dispatch:
-
-# Establece permisos del GITHUB_TOKEN para permitir deployment a GitHub Pages
+# Permisos mínimos para GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Permite solo un deployment concurrente, saltando runs que están en cola entre el run en progreso y el último en cola.
-# Sin embargo, NO cancela runs en progreso ya que queremos permitir que estos deployments de producción se completen.
+# Solo un deployment a la vez para estabilidad
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Job de Build y Test
+  # Job principal: Build, Test y Quality Assurance
   build-and-test:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout
+    - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
+    - name: Setup Node.js 18
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -39,21 +36,21 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Run linter
+    - name: Run ESLint
       run: npm run lint
       
-    - name: Run tests
+    - name: Run Vitest tests with coverage
       run: npm run test:coverage
       
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage/lcov.info
         flags: unittests
-        name: codecov-umbrella
+        name: rastro-sureno-coverage
         fail_ci_if_error: false
         
-    - name: Build for production
+    - name: Build production bundle
       run: npm run build
       
     - name: Upload build artifacts
@@ -63,14 +60,14 @@ jobs:
         path: dist/
         retention-days: 1
 
-  # Job de Deploy a GitHub Pages
+  # Job de Deploy a GitHub Pages (solo en main)
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     
     steps:
     - name: Download build artifacts
@@ -83,7 +80,7 @@ jobs:
       uses: actions/configure-pages@v4
       
     - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4  # Actualizada a v4
       with:
         path: dist/
         
@@ -91,15 +88,22 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v4
 
-  # Job para Docker (opcional)
+  # Job Docker optimizado (implementación de sugerencia de Gemini)
   docker:
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     
     steps:
-    - name: Checkout
+    - name: Checkout repository
       uses: actions/checkout@v4
+      
+    # Descargar los artifacts ya construidos (optimización clave)
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
       
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -111,7 +115,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Extract metadata
+    - name: Extract metadata for Rastro Sureño
       id: meta
       uses: docker/metadata-action@v5
       with:
@@ -121,13 +125,37 @@ jobs:
           type=ref,event=pr
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
+          # Agregar semantic versioning para releases futuras
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
           
-    - name: Build and push Docker image
+    - name: Build and push optimized Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
+        target: production  # Usar stage específico
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+          VCS_REF=${{ github.sha }}
+          VERSION=${{ github.ref_name }}
+
+  # Job de notificación (nuevo - para monitoreo)
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, deploy, docker]
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "✅ Rastro Sureño Link in Bio desplegado exitosamente!"
+          echo "🌐 URL: https://d-araya.github.io/link_in_bio_web/"
+        else
+          echo "❌ Falló el deployment de Rastro Sureño"
+        fi

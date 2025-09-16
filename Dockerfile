@@ -1,83 +1,94 @@
-# Multi-stage Dockerfile para desarrollo y testing
-FROM node:20-alpine as base
+# Dockerfile optimizado para Rastro Sureño Link in Bio
+# Implementa la sugerencia de Gemini: usar artifacts preconstruidos
 
-# Instalar dependencias del sistema necesarias para testing
-RUN apk add --no-cache git
-
-# Establecer directorio de trabajo
+# ================================
+# Stage 1: Base dependencies
+# ================================
+FROM node:20-alpine AS base
 WORKDIR /app
-
-# Copiar archivos de configuración de dependencias
+RUN apk add --no-cache libc6-compat
 COPY package*.json ./
 
-# Instalar todas las dependencias (incluyendo devDependencies)
-RUN npm install
-
-# Copiar archivos de configuración
-COPY tsconfig*.json ./
-COPY vite.config.js ./
-COPY vitest.config.ts ./
-COPY eslint.config.js ./
-
-# Copiar el resto del código fuente
+# ================================
+# Stage 2: Development environment
+# ================================
+FROM base AS development
+RUN npm ci
 COPY . .
-
-# Stage para desarrollo
-FROM base as development
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-# Stage para testing
-FROM base as testing
-CMD ["npm", "run", "test"]
+# ================================
+# Stage 3: Testing environment
+# ================================
+FROM development AS testing
+RUN npm run test:run
 
-# Stage para testing con coverage
-FROM base as testing-coverage
-CMD ["npm", "run", "test:coverage"]
-
-# Stage para build de producción
-FROM base as build
+# ================================
+# Stage 4: Build stage (para CI local)
+# ================================
+FROM base AS build
+RUN npm ci --only=production && npm cache clean --force
+COPY . .
 RUN npm run build
 
-# Stage para producción con nginx optimizado
-FROM nginx:alpine as production
+# ================================
+# Stage 5: Production optimizado (NUEVA IMPLEMENTACIÓN)
+# ================================
+# Esta stage puede usar artifacts preconstruidos desde GitHub Actions
+FROM nginx:alpine AS production
 
-# Crear usuario no-root para seguridad
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+# Metadatos para tracking
+ARG BUILD_DATE
+ARG VCS_REF  
+ARG VERSION
+LABEL org.opencontainers.image.created=$BUILD_DATE \
+      org.opencontainers.image.source="https://github.com/D-Araya/link_in_bio_web" \
+      org.opencontainers.image.revision=$VCS_REF \
+      org.opencontainers.image.version=$VERSION \
+      org.opencontainers.image.title="Rastro Sureño Link in Bio" \
+      org.opencontainers.image.description="Link in bio para Rastro Sureño - Quesos Artesanales Patagónicos"
 
-# Copiar archivos de build
-COPY --from=build /app/dist /usr/share/nginx/html
+# Configuración de seguridad
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
 
-# Crear configuración nginx optimizada
-RUN echo 'server {' > /etc/nginx/conf.d/default.conf && \
-    echo '    listen 80;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    server_name localhost;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    root /usr/share/nginx/html;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    index index.html;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    ' >> /etc/nginx/conf.d/default.conf && \
-    echo '    # Gzip compression' >> /etc/nginx/conf.d/default.conf && \
-    echo '    gzip on;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    gzip_vary on;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    gzip_min_length 1024;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    ' >> /etc/nginx/conf.d/default.conf && \
-    echo '    # Cache static assets' >> /etc/nginx/conf.d/default.conf && \
-    echo '    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {' >> /etc/nginx/conf.d/default.conf && \
-    echo '        expires 1y;' >> /etc/nginx/conf.d/default.conf && \
-    echo '        add_header Cache-Control "public, immutable";' >> /etc/nginx/conf.d/default.conf && \
-    echo '    }' >> /etc/nginx/conf.d/default.conf && \
-    echo '    ' >> /etc/nginx/conf.d/default.conf && \
-    echo '    # Handle client-side routing' >> /etc/nginx/conf.d/default.conf && \
-    echo '    location / {' >> /etc/nginx/conf.d/default.conf && \
-    echo '        try_files $uri $uri/ /index.html;' >> /etc/nginx/conf.d/default.conf && \
-    echo '    }' >> /etc/nginx/conf.d/default.conf && \
-    echo '}' >> /etc/nginx/conf.d/default.conf
+# Configuración optimizada de Nginx
+COPY --chown=nextjs:nodejs nginx.conf /etc/nginx/nginx.conf
 
-# Cambiar permisos
-RUN chown -R nextjs:nodejs /usr/share/nginx/html && \
-    chown -R nextjs:nodejs /var/cache/nginx && \
-    chown -R nextjs:nodejs /var/log/nginx && \
-    chown -R nextjs:nodejs /etc/nginx/conf.d
+# Opción 1: Usar artifacts desde GitHub Actions (cuando están disponibles)
+# Esta línea se ejecutará en el contexto de GitHub Actions
+COPY --chown=nextjs:nodejs dist/ /usr/share/nginx/html/
+
+# Opción 2: Fallback - usar build local si no hay artifacts
+# Esta línea se usa para builds locales con Docker
+# COPY --from=build --chown=nextjs:nodejs /app/dist/ /usr/share/nginx/html/
+
+# Cambiar al usuario no-root para seguridad
+USER nextjs
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+# ================================
+# Stage 6: Production con build integrado (para desarrollo local)
+# ================================
+FROM nginx:alpine AS production-selfbuild
+ARG BUILD_DATE
+ARG VCS_REF  
+ARG VERSION
+
+LABEL org.opencontainers.image.created=$BUILD_DATE \
+      org.opencontainers.image.source="https://github.com/D-Araya/link_in_bio_web" \
+      org.opencontainers.image.revision=$VCS_REF \
+      org.opencontainers.image.version=$VERSION
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
+
+# Para desarrollo local: usar el build integrado
+COPY --from=build --chown=nextjs:nodejs /app/dist/ /usr/share/nginx/html/
+COPY --chown=nextjs:nodejs nginx.conf /etc/nginx/nginx.conf
 
 USER nextjs
 EXPOSE 80

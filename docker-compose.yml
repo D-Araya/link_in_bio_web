@@ -1,83 +1,229 @@
+# docker-compose.yml optimizado para Rastro Sureño Link in Bio
+# Compatible con Dockerfile multi-stage optimizado
+
+version: '3.8'
+
 services:
+  # ================================
   # Servicio principal para desarrollo
+  # ================================
   app:
     build:
       context: .
       target: development
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VCS_REF: ${VCS_REF:-$(git rev-parse HEAD)}
+        VERSION: ${VERSION:-dev}
     ports:
       - "5173:5173"
     volumes:
-      - .:/app
-      - /app/node_modules
+      - .:/app:cached                    # Cached para mejor performance en macOS
+      - node_modules:/app/node_modules   # Volumen nombrado para node_modules
     environment:
       - NODE_ENV=development
+      - VITE_APP_NAME=Rastro Sureño Link in Bio
+      - VITE_APP_VERSION=${VERSION:-dev}
     stdin_open: true
     tty: true
     networks:
-      - link-in-bio-network
+      - rastro-sureno-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # Servicio para ejecutar tests
+  # ================================
+  # Servicio para tests unitarios
+  # ================================
   test:
     build:
       context: .
       target: testing
     volumes:
-      - .:/app
-      - /app/node_modules
+      - .:/app:cached
+      - node_modules:/app/node_modules
     environment:
       - NODE_ENV=test
-    stdin_open: true
-    tty: true
+      - CI=true
+    command: npm run test:run
     networks:
-      - link-in-bio-network
+      - rastro-sureno-network
     profiles:
       - testing
 
-  # Servicio para ejecutar tests con coverage
+  # ================================
+  # Servicio para tests con coverage
+  # ================================
   test-coverage:
     build:
       context: .
-      target: testing-coverage
+      target: testing
     volumes:
-      - .:/app
-      - /app/node_modules
-      - ./coverage:/app/coverage
+      - .:/app:cached
+      - node_modules:/app/node_modules
+      - ./coverage:/app/coverage        # Montar coverage para acceso externo
     environment:
       - NODE_ENV=test
-    stdin_open: true
-    tty: true
+      - CI=true
+    command: npm run test:coverage
     networks:
-      - link-in-bio-network
+      - rastro-sureno-network
     profiles:
       - testing
 
+  # ================================
+  # Servicio para tests en modo watch
+  # ================================
+  test-watch:
+    build:
+      context: .
+      target: testing
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=test
+    command: npm run test
+    stdin_open: true
+    tty: true
+    networks:
+      - rastro-sureno-network
+    profiles:
+      - testing
+
+  # ================================
   # Servicio para build de producción
+  # ================================
   build:
     build:
       context: .
       target: build
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VCS_REF: ${VCS_REF:-$(git rev-parse HEAD)}
+        VERSION: ${VERSION:-$(git describe --tags --always)}
     volumes:
-      - ./dist:/app/dist
+      - build-artifacts:/app/dist       # Volumen nombrado para artifacts
     environment:
       - NODE_ENV=production
+      - VITE_APP_NAME=Rastro Sureño Link in Bio
+      - VITE_APP_VERSION=${VERSION:-$(git describe --tags --always)}
+    networks:
+      - rastro-sureno-network
     profiles:
       - build
 
-  # Servicio para producción con Nginx
+  # ================================
+  # Producción optimizada (usa artifacts preconstruidos si existen)
+  # ================================
   production:
     build:
       context: .
       target: production
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VCS_REF: ${VCS_REF:-$(git rev-parse HEAD)}
+        VERSION: ${VERSION:-$(git describe --tags --always)}
     ports:
       - "80:80"
+      - "443:443"  # Preparado para HTTPS futuro
+    volumes:
+      # Si tienes artifacts externos (desde CI), móntalos aquí
+      - ./dist:/usr/share/nginx/html:ro,cached  # Solo lectura para seguridad
+      # Configuración personalizada de Nginx
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
     networks:
-      - link-in-bio-network
+      - rastro-sureno-network
     profiles:
       - production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
 
+  # ================================
+  # Producción con build integrado (para desarrollo local)
+  # ================================
+  production-selfbuild:
+    build:
+      context: .
+      target: production-selfbuild
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VCS_REF: ${VCS_REF:-$(git rev-parse HEAD)}
+        VERSION: ${VERSION:-$(git describe --tags --always)}
+    ports:
+      - "8080:80"  # Puerto diferente para no chocar con 'production'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - rastro-sureno-network
+    profiles:
+      - production-local
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  # ================================
+  # Servicio para Vitest UI (opcional)
+  # ================================
+  test-ui:
+    build:
+      context: .
+      target: testing
+    ports:
+      - "51204:51204"  # Puerto por defecto de Vitest UI
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=test
+    command: npm run test:ui -- --host 0.0.0.0
+    stdin_open: true
+    tty: true
+    networks:
+      - rastro-sureno-network
+    profiles:
+      - testing
+      - ui
+
+# ================================
+# Networks
+# ================================
 networks:
-  link-in-bio-network:
+  rastro-sureno-network:
     driver: bridge
+    name: rastro-sureno-network
+    labels:
+      project: "rastro-sureno-link-in-bio"
+      environment: "development"
 
+# ================================
+# Volumes
+# ================================
 volumes:
+  # Volumen persistente para node_modules (mejora performance)
   node_modules:
+    name: rastro-sureno-node-modules
+    labels:
+      project: "rastro-sureno-link-in-bio"
+  
+  # Volumen para artifacts de build
+  build-artifacts:
+    name: rastro-sureno-build-artifacts
+    labels:
+      project: "rastro-sureno-link-in-bio"
