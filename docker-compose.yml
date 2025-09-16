@@ -1,0 +1,83 @@
+services:
+  # Servicio principal para desarrollo
+  app:
+    build:
+      context: .
+      target: development
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true
+    networks:
+      - link-in-bio-network
+
+  # Servicio para ejecutar tests
+  test:
+    build:
+      context: .
+      target: testing
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=test
+    stdin_open: true
+    tty: true
+    networks:
+      - link-in-bio-network
+    profiles:
+      - testing
+
+  # Servicio para ejecutar tests con coverage
+  test-coverage:
+    build:
+      context: .
+      target: testing-coverage
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./coverage:/app/coverage
+    environment:
+      - NODE_ENV=test
+    stdin_open: true
+    tty: true
+    networks:
+      - link-in-bio-network
+    profiles:
+      - testing
+
+  # Servicio para build de producción
+  build:
+    build:
+      context: .
+      target: build
+    volumes:
+      - ./dist:/app/dist
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - build
+
+  # Servicio para producción con Nginx
+  production:
+    build:
+      context: .
+      target: production
+    ports:
+      - "80:80"
+    networks:
+      - link-in-bio-network
+    profiles:
+      - production
+
+networks:
+  link-in-bio-network:
+    driver: bridge
+
+volumes:
+  node_modules:
