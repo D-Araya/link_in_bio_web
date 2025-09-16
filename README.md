@@ -285,6 +285,7 @@ graph LR
     F --> I[Upload to Codecov]
 ```
 
+```
 #### Características del Deployment
 
 - ✅ **CI/CD Automático** con GitHub Actions
