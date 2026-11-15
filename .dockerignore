@@ -1,0 +1,14 @@
+node_modules
+.git
+.env
+.env.*
+coverage
+playwright-report
+test-results
+tmp
+*.log
+README.md
+DEPLOYMENT.md
+AUDIT_REPORT.md
+specs
+# dist is required by the production target (artifact build).

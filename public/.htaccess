@@ -1,0 +1,18 @@
+# Hostinger PHP/HTML hosting (Apache/LiteSpeed). No SPA rewrite is needed.
+DirectoryIndex index.html
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+    Header set Cache-Control "no-cache"
+    <FilesMatch "-[A-Za-z0-9_-]{8,}\.(js|css|jpg|png|svg|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

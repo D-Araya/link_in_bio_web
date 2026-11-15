@@ -1,161 +1,136 @@
-name: Build and Deploy Rastro Sureño Link in Bio
+name: Verify and package Rastro Sureño
 
 on:
   push:
-    branches: [ main ]  # Solo main branch
+    branches: [main]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:    # Manual trigger para testing
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish_pages:
+        description: Publish to GitHub Pages (optional; primary hosting is Hostinger)
+        type: boolean
+        default: false
+      publish_image:
+        description: Publish the optional Docker image to GHCR
+        type: boolean
+        default: false
 
-# Permisos mínimos para GitHub Pages
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# Solo un deployment a la vez para estabilidad
 concurrency:
-  group: "pages"
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  # Job principal: Build, Test y Quality Assurance
   build-and-test:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js 18
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run ESLint
-      run: npm run lint
-      
-    - name: Run Vitest tests with coverage
-      run: npm run test:coverage
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: rastro-sureno-coverage
-        fail_ci_if_error: false
-        
-    - name: Build production bundle
-      run: npm run build
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dist
-        path: dist/
-        retention-days: 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hostinger-dist
+          path: dist/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-reports
+          path: |
+            coverage/
+            playwright-report/
+          retention-days: 14
 
-  # Job de Deploy a GitHub Pages (solo en main)
-  deploy:
+  verify-container:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v4
+        with:
+          name: hostinger-dist
+          path: dist/
+      - run: docker build --target production -t rastro-sureno:artifact .
+      - run: node scripts/verify-container.mjs rastro-sureno:artifact
+      - run: docker build --target production-selfbuild -t rastro-sureno:selfbuild .
+      - run: node scripts/verify-container.mjs rastro-sureno:selfbuild
+
+  deploy-pages:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_pages
+    needs: [build-and-test, verify-container]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main'
-    
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist/
-        
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-      
-    - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v4  # Actualizada a v4
-      with:
-        path: dist/
-        
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: hostinger-dist
+          path: dist/
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
-  # Job Docker optimizado (implementación de sugerencia de Gemini)
-  docker:
+  publish-image:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_image
+    needs: [build-and-test, verify-container]
     runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main'
-    
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
-    # Descargar los artifacts ya construidos (optimización clave)
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist/
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Extract metadata for Rastro Sureño
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/${{ github.repository }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-          # Agregar semantic versioning para releases futuras
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          
-    - name: Build and push optimized Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        target: production  # Usar stage específico
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        build-args: |
-          BUILD_DATE=${{ github.event.head_commit.timestamp }}
-          VCS_REF=${{ github.sha }}
-          VERSION=${{ github.ref_name }}
-
-  # Job de notificación (nuevo - para monitoreo)
-  notify:
-    runs-on: ubuntu-latest
-    needs: [build-and-test, deploy, docker]
-    if: always() && github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Notify deployment status
-      run: |
-        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
-          echo "✅ Rastro Sureño Link in Bio desplegado exitosamente!"
-          echo "🌐 URL: https://d-araya.github.io/link_in_bio_web/"
-        else
-          echo "❌ Falló el deployment de Rastro Sureño"
-        fi
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: hostinger-dist
+          path: dist/
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: VCS_REF=${{ github.sha }}

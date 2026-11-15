@@ -1,20 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  base: './',
+  plugins: [
+    react(),
+    {
+      name: 'development-csp',
+      apply: 'serve',
+      // Vite HMR requires inline refresh code and a local WebSocket in dev.
+      transformIndexHtml: {
+        order: 'pre',
+        handler: (html) => html.replace(/\s*<meta http-equiv="Content-Security-Policy"[^>]*>/, ''),
+      },
+    },
+  ],
   server: {
-    host: '0.0.0.0',
+    host: '127.0.0.1',
     port: 5173
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom']
-        }
-      }
-    }
+    sourcemap: false,
   }
 })

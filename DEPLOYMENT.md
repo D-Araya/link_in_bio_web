@@ -1,273 +1,44 @@
-# 🚀 Guía de Despliegue en Producción
+# Despliegue de Rastro Sureño
 
-Esta guía te ayudará a desplegar tu aplicación Link-in-Bio usando herramientas gratuitas de GitHub: GitHub Actions (CI/CD), GitHub Container Registry y GitHub Pages.
+## Hostinger desde GitHub
 
-## 📋 Requisitos Previos
+En hPanel, crea una **Web App** en el dominio o subdominio de la página. Elige **Importar repositorio Git**, conecta GitHub y selecciona el repositorio y la rama que quieras publicar. Esta opción requiere un plan de Hostinger que incluya Web Apps. [Guía oficial de importación](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).
 
-- Cuenta de GitHub
-- Repositorio público en GitHub (para GitHub Pages gratuito)
-- Conocimientos básicos de Git
+| Campo | Valor |
+| --- | --- |
+| Framework | React con Vite, según el preset detectado |
+| Rama | `main` o la rama elegida para producción |
+| Directorio raíz | Raíz del repositorio |
+| Versión de Node.js | `22.x` |
+| Gestor de paquetes | `npm` |
+| Comando de build | `npm run build` |
+| Directorio de salida | `dist` |
+| Entry file y variables de entorno | Dejar vacíos |
 
-## 🏗️ Arquitectura de Despliegue
+Sube los archivos fuente y `package-lock.json` a la rama elegida antes de importarla. `.gitignore` excluye `dist/`, `node_modules/`, `.env` y sus variantes, archivos temporales y reportes. Hostinger instala las dependencias y genera `dist/`. Node se usa para compilar y el sitio se sirve como archivos estáticos. [Versiones de Node disponibles](https://www.hostinger.com/support/how-to-select-the-node-js-version-for-your-application/).
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Código Local  │───▶│  GitHub Actions  │───▶│  GitHub Pages   │
-│                 │    │     (CI/CD)      │    │   (Hosting)     │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                              │
-                              ▼
-                       ┌──────────────────┐
-                       │GitHub Container  │
-                       │    Registry      │
-                       │   (Docker)       │
-                       └──────────────────┘
-```
+Después del despliegue, revisa el dominio por HTTPS y comprueba logo, estilos y enlaces. Para actualizar, publica los cambios en la rama conectada y revisa los logs de Hostinger. Para volver a una versión anterior, revierte el cambio en Git y vuelve a desplegar. La configuración efectiva de headers depende del servicio de hosting. La política de contenido base viaja en el HTML.
 
-## 🔧 Configuración Paso a Paso
+## Alternativa de carga manual en Hostinger
 
-### 1. Preparar el Repositorio
+La aplicación compilada es HTML, CSS, JavaScript y recursos estáticos. En hPanel crea o selecciona un sitio con acceso al Administrador de archivos, por ejemplo **PHP/HTML personalizado**. Usa el dominio o subdominio reservado a esta página. [Guía oficial para añadir un sitio](https://www.hostinger.com/support/1583214-how-to-add-a-website-in-hostinger/).
 
-1. **Crear repositorio en GitHub:**
-   ```bash
-   # Si aún no tienes un repositorio
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-   git push -u origin main
-   ```
+1. Obtén el ZIP de entrega o descarga el artefacto `hostinger-dist` de una ejecución exitosa del workflow. Para generar los archivos localmente con Node 22, usa `npm ci` y `npm run build`.
+2. Antes de reemplazar una versión, descarga un respaldo de los archivos que gestiona este proyecto. Si el dominio ya aloja la tienda, usa el subdominio o directorio destinado al enlace en bio.
+3. Sube y extrae el ZIP en `public_html` o en el directorio elegido. Deja `index.html`, `favicon.svg`, `assets/` y `.htaccess` juntos, sin una carpeta adicional `dist/`. Si ya existe un `.htaccess` del sitio en el directorio, revisa cómo incorporar estas reglas antes de reemplazarlo.
+4. Abre el sitio por HTTPS. Comprueba el logo, los seis enlaces y que el navegador cargue JS y CSS. Para una instalación en subdirectorio, abre la URL con slash al final. El certificado y el redireccionamiento HTTPS se administran en Hostinger.
+5. Conserva el ZIP fuera del directorio público tras extraerlo.
 
-2. **Actualizar configuración de Vite:**
-   - Edita `vite.config.js` y cambia el nombre del repositorio:
-   ```javascript
-   // Línea 28: cambiar 'link-in-bio-website' por el nombre de tu repositorio
-   config.base = '/TU_REPOSITORIO/'
-   ```
+Documentación oficial del [Administrador de archivos](https://www.hostinger.com/support/4548688-basic-actions-in-the-file-manager-in-hostinger/).
 
-### 2. Configurar GitHub Pages
+La política de contenido también está en el HTML. `.htaccess` añade headers y caché cuando el hosting admite las directivas correspondientes. Comprueba sus valores efectivos tras publicar. La página usa una sola ruta y no necesita reescrituras.
 
-1. **Ir a Settings del repositorio**
-2. **Navegar a Pages (en el menú lateral)**
-3. **Configurar Source:**
-   - Source: `GitHub Actions`
-   - ✅ No seleccionar "Deploy from a branch"
+## Actualización y rollback
 
-### 3. Configurar Permisos de GitHub Actions
+Primero carga los nuevos archivos con hash de `assets/` y después actualiza `index.html`. Conserva al menos el conjunto de archivos referenciado por la versión previa, para que el rollback no dependa de volver a subir esos assets. Para volver atrás, restaura la versión anterior respaldada y abre el sitio por HTTPS para comprobar el resultado. Purga la caché de HTML del hosting si sigue sirviendo la revisión equivocada.
 
-1. **Ir a Settings → Actions → General**
-2. **Workflow permissions:**
-   - ✅ Seleccionar "Read and write permissions"
-   - ✅ Marcar "Allow GitHub Actions to create and approve pull requests"
+## Destinos opcionales
 
-### 4. Configurar Variables de Entorno (Opcional)
-
-1. **Ir a Settings → Secrets and variables → Actions**
-2. **Agregar variables de repositorio:**
-   ```
-   VITE_APP_TITLE=Tu Nombre
-   VITE_APP_DESCRIPTION=Tu descripción
-   VITE_SOCIAL_INSTAGRAM=tu_usuario_instagram
-   VITE_SOCIAL_TWITTER=tu_usuario_twitter
-   VITE_SOCIAL_LINKEDIN=tu_usuario_linkedin
-   VITE_SOCIAL_GITHUB=tu_usuario_github
-   ```
-
-### 5. Activar GitHub Container Registry
-
-1. **Ir a Settings → Developer settings → Personal access tokens**
-2. **Crear token con permisos:**
-   - `write:packages`
-   - `read:packages`
-   - `delete:packages`
-
-## 🚀 Proceso de Despliegue
-
-### Despliegue Automático
-
-Cada vez que hagas `push` a la rama `main`, se ejecutará automáticamente:
-
-1. **Build y Test** (GitHub Actions)
-   - Instala dependencias
-   - Ejecuta linter
-   - Ejecuta tests con cobertura
-   - Construye la aplicación
-
-2. **Deploy a GitHub Pages**
-   - Despliega automáticamente a `https://TU_USUARIO.github.io/TU_REPOSITORIO/`
-
-3. **Build Docker Image**
-   - Construye imagen Docker optimizada
-   - La sube a GitHub Container Registry
-   - Disponible en `ghcr.io/TU_USUARIO/TU_REPOSITORIO:latest`
-
-### Despliegue Manual
-
-```bash
-# 1. Hacer cambios en el código
-git add .
-git commit -m "Descripción de cambios"
-git push origin main
-
-# 2. El workflow se ejecuta automáticamente
-# 3. Verificar en: https://github.com/TU_USUARIO/TU_REPOSITORIO/actions
-```
-
-## 🐳 Uso de Docker
-
-### Ejecutar localmente con Docker
-
-```bash
-# Desarrollo
-docker-compose up app
-
-# Producción
-docker-compose up production
-
-# Testing
-docker-compose up testing
-```
-
-### Usar imagen de GitHub Container Registry
-
-```bash
-# Descargar y ejecutar
-docker run -p 80:80 ghcr.io/TU_USUARIO/TU_REPOSITORIO:latest
-```
-
-## 📊 Monitoreo y Verificación
-
-### URLs Importantes
-
-- **Aplicación en vivo:** `https://TU_USUARIO.github.io/TU_REPOSITORIO/`
-- **GitHub Actions:** `https://github.com/TU_USUARIO/TU_REPOSITORIO/actions`
-- **Container Registry:** `https://github.com/TU_USUARIO/TU_REPOSITORIO/pkgs/container/TU_REPOSITORIO`
-- **Configuración Pages:** `https://github.com/TU_USUARIO/TU_REPOSITORIO/settings/pages`
-
-### Verificar Despliegue
-
-1. **Check GitHub Actions:**
-   - ✅ Build and Test job completado
-   - ✅ Deploy job completado
-   - ✅ Docker job completado
-
-2. **Check GitHub Pages:**
-   - ✅ Sitio accesible
-   - ✅ Assets cargando correctamente
-   - ✅ Responsive design funcionando
-
-3. **Check Docker Image:**
-   - ✅ Imagen disponible en GHCR
-   - ✅ Tags correctos
-   - ✅ Tamaño optimizado
-
-## 🔧 Troubleshooting
-
-### Problemas Comunes
-
-**1. Error 404 en GitHub Pages**
-```bash
-# Verificar que el base path en vite.config.js sea correcto
-# Debe coincidir con el nombre del repositorio
-config.base = '/nombre-exacto-del-repositorio/'
-```
-
-**2. Assets no cargan**
-```bash
-# Verificar que los paths relativos estén correctos
-# GitHub Pages sirve desde subdirectorio
-```
-
-**3. Workflow falla en tests**
-```bash
-# Ejecutar tests localmente primero
-npm run test
-npm run lint
-npm run build
-```
-
-**4. Docker build falla**
-```bash
-# Verificar que todos los archivos de configuración existan
-# Especialmente vite.config.js
-```
-
-### Logs y Debugging
-
-```bash
-# Ver logs de GitHub Actions
-# Ir a: https://github.com/TU_USUARIO/TU_REPOSITORIO/actions
-
-# Ver logs de Docker localmente
-docker-compose logs app
-
-# Verificar build local
-npm run build
-npm run preview
-```
-
-## 💰 Costos y Límites
-
-### GitHub Pages (Gratuito)
-- ✅ Repositorios públicos: Ilimitado
-- ✅ Ancho de banda: 100GB/mes
-- ✅ Builds: 10 por hora
-
-### GitHub Actions (Gratuito)
-- ✅ Repositorios públicos: Ilimitado
-- ✅ Repositorios privados: 2000 minutos/mes
-
-### GitHub Container Registry
-- ✅ Repositorios públicos: Gratis
-- ✅ Almacenamiento: 1GB gratis
-- ✅ Transferencia: 1GB gratis/mes
-- 💰 Adicional: $0.25/GB almacenamiento, $0.50/GB transferencia
-
-## 🎯 Optimizaciones Adicionales
-
-### Performance
-- ✅ Gzip compression habilitada
-- ✅ Cache de assets estáticos (1 año)
-- ✅ Bundle splitting (vendor/app)
-- ✅ Lazy loading de componentes
-
-### SEO
-- ✅ Meta tags configurados
-- ✅ Sitemap automático
-- ✅ URLs amigables
-- ✅ Open Graph tags
-
-### Seguridad
-- ✅ HTTPS por defecto
-- ✅ Container no-root user
-- ✅ Dependencias actualizadas
-- ✅ Secrets management
-
-## 📞 Soporte
-
-Si tienes problemas:
-
-1. **Revisa los logs** de GitHub Actions
-2. **Verifica la configuración** de GitHub Pages
-3. **Comprueba** que el repositorio sea público
-4. **Consulta** la documentación oficial de GitHub
-
----
-
-¡Tu aplicación Link-in-Bio está lista para producción! 🎉
-```mermaid
-graph TD
-    A[Inicio: Push o Pull Request a main/master] --> B(Job: build-and-test);
-    B -- Si tiene éxito --> C{¿Rama es main o master?};
-    C -- Sí --> D(Job: deploy);
-    C -- Sí --> E(Job: docker);
-    C -- No --> F[Fin];
-    D --> G[Sitio desplegado en GitHub Pages];
-    E --> H[Imagen subida a GHCR];
-
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style D fill:#9f9,stroke:#333,stroke-width:2px
-    style E fill:#9f9,stroke:#333,stroke-width:2px
-```
+- GitHub Pages. Configura GitHub Actions como origen de Pages y ejecuta manualmente **Verify and package Rastro Sureño** sobre `main` con `publish_pages`.
+- GHCR. Ejecuta manualmente el mismo workflow con `publish_image`. Conserva el SHA o digest de la imagen para volver a una revisión. El contenedor escucha HTTP en 8080.
+- Docker local. `docker compose --profile production up --build production` construye desde fuentes. Para empaquetar un build existente, usa `docker build --target production -t rastro-sureno:local .` después de `npm run build`. Comprueba ambas variantes con `node scripts/verify-container.mjs IMAGEN`.
