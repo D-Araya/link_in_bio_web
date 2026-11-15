@@ -98,7 +98,7 @@ jobs:
           path: dist/
       - name: Deploy Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   publish-image:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.publish_image
